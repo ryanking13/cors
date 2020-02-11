@@ -7,9 +7,19 @@ async function handleRequest(request) {
   if (apiurl === null) {
     return new Response('url not given')
   }
+
   request = new Request(apiurl, request)
   request.headers.set('Origin', new URL(apiurl).origin)
+
+  // return new Response(JSON.stringify([...request.headers], null, 2))
+  const host = url.searchParams.get('host')
+  if (host !== null) {
+    request.headers.set('Host', host)
+  }
+
   let response = await fetch(request)
+  // return new Response(JSON.stringify([...response.headers], null, 2))
+
   // Recreate the response so we can modify the headers
   response = new Response(response.body, response)
   // Set CORS headers
