@@ -20,6 +20,8 @@ See [Making your own CORS proxy](#making-your-own-cors-proxy).
 ## Making your own CORS proxy
 
 1. [Learn about Cloudflare Workers](https://workers.cloudflare.com/)
-1. Fork this repository
-1. Change `accound_id` in [wrangler.toml](./wrangler.toml) to your Account ID
-1. `wrangler publish` ✨
+2. Fork this repository
+3. Change `accound_id` in [wrangler.toml](./wrangler.toml) to your Account ID
+4. (Optional) Set `APP_NAME`, `HOSTNAME`, `APP_KEY` (Ingestion key) for [LogDNA](https://logdna.com/) logging
+  - If logging is not needed, set `APP_KEY` to empty string `""`. 
+5. `wrangler publish` ✨
