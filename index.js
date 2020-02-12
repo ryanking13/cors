@@ -1,3 +1,8 @@
+const APP_NAME = "cors.ryanking13"
+const HOSTNAME = "CORS_RYANKING13_WORKERS_DEV"
+const APP_KEY = "62492b64742400257938bd440f99a50f"
+
+
 async function handleRequest(request) {
   const url = new URL(request.url)
   const apiurl = url.searchParams.get('u')
@@ -18,6 +23,7 @@ async function handleRequest(request) {
   }
 
   let response = await fetch(request)
+
   // return new Response(JSON.stringify([...response.headers], null, 2))
 
   // Recreate the response so we can modify the headers
@@ -53,6 +59,64 @@ function handleOptions(request) {
     })
   }
 }
+
+// loggin code adapted from: https://github.com/adaptive/cf-logdna-worker
+const getLogData = (request) => {
+  let data = {
+    app: APP_NAME,
+    timestamp: Date.now(),
+    meta: {
+      ua: request.headers.get("user-agent"),
+      referer: request.headers.get("Referer") || "empty",
+      ip: request.headers.get("CF-Connecting-IP"),
+      countryCode: (request.cf || {}).country,
+      colo: (request.cf || {}).colo,
+      url: request.url,
+      method: request.method,
+      x_forwarded_for: request.headers.get("x_forwarded_for") || "0.0.0.0",
+      asn: (request.cf || {}).asn,
+      cfRay: request.headers.get("cf-ray"),
+      tlsCipher: (request.cf || {}).tlsCipher,
+      tlsVersion: (request.cf || {}).tlsVersion,
+      clientTrustScore: (request.cf || {}).clientTrustScore,
+    }
+  }
+  data.line = `${data.meta.countryCode} ${data.meta.ip} ${data.meta.url}`
+  return data
+}
+
+const postLog = request => {
+  let data = JSON.stringify({ lines: [request] })
+  let myHeaders = new Headers()
+  myHeaders.append("Content-Type", "application/json; charset=UTF-8")
+  myHeaders.append(
+    "Authorization",
+    "Basic " + btoa(APP_KEY + ":"),
+  )
+  try {
+    return fetch(
+      "https://logs.logdna.com/logs/ingest?tag=worker&hostname=" + HOSTNAME,
+      {
+        method: "POST",
+        headers: myHeaders,
+        body: data
+      }
+    ).then(r => {
+      requests = []
+    })
+  } catch (err) {
+    //console.log(err.stack || err)
+  }
+}
+
+const log = async event => {
+  if (APP_KEY === "") {
+    return new Promise()
+  }
+
+  return postLog(getLogData(event.request))
+}
+
 addEventListener('fetch', event => {
   const request = event.request
   const url = new URL(request.url)
@@ -65,7 +129,10 @@ addEventListener('fetch', event => {
     request.method === 'POST'
   ) {
     // Handle requests to the API server
-    event.respondWith(handleRequest(request))
+    const loggingEvent = log(event)
+    const response = handleRequest(request)
+    event.waitUntil(loggingEvent)
+    event.respondWith(response)
   } else {
     event.respondWith(async () => {
       return new Response(null, {
