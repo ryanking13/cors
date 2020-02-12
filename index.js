@@ -81,7 +81,7 @@ const getLogData = (request) => {
       clientTrustScore: (request.cf || {}).clientTrustScore,
     }
   }
-  data.line = `${data.meta.countryCode} ${data.meta.ip} ${data.meta.url}`
+  data.line = `${data.meta.countryCode} ${data.meta.ip} ${data.meta.referer} ==> ${data.meta.url}`
   return data
 }
 
